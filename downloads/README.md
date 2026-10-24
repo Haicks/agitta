@@ -1,14 +1,16 @@
 # APK de demonstração
 
-[Baixar agitta-demo-debug.apk](https://github.com/Haicks/agitta/raw/refs/heads/main/downloads/agitta-demo-debug.apk)
+[Baixar agitta-demo-0.1.1.apk](https://github.com/Haicks/agitta/raw/refs/heads/main/downloads/agitta-demo-0.1.1.apk)
 
 Se o navegador não iniciar o download, abra o arquivo no GitHub e use **Download raw file** (ícone de download). Se o repositório for privado, entre na conta do GitHub que tem acesso a ele.
 
-O arquivo tem aproximadamente 3,4 MB, usa assinatura de desenvolvimento e requer Android 7.0/API 24 ou superior. Sua assinatura e a integridade do ZIP foram verificadas; a instalação em aparelho físico ainda não foi testada.
+O arquivo tem aproximadamente 3,5 MB, usa assinatura de desenvolvimento e requer Android 7.0/API 24 ou superior. A versão **0.1.1 / código 101** corrige a compatibilidade com WebViews antigos. Foi instalada e testada em emulador Android 11, com WebView 83, incluindo login visual, feed, detalhes, publicação e salvos. Não houve teste em aparelho físico.
+
+Se você já instalou a versão 0.1.0, abra o novo arquivo e escolha **Atualizar**. A assinatura é a mesma; não é necessário desinstalar nem apagar os dados da demonstração. O nome com versão evita baixar a cópia antiga do cache. O arquivo `agitta-demo-debug.apk` continua disponível como alias da versão atual.
 
 Abra **Explorar demonstração** para navegar por eventos fictícios e publicar dados locais. O login com contas compartilhadas exige conectar um Supabase hospedado e gerar outro APK; esse backend não está incluído na demonstração.
 
-O APK corresponde ao código do commit `2435fba430f481b29b23622e3c7673e0023b4641`. O hash está em [SHA256SUMS](SHA256SUMS). Para verificar em Linux:
+O APK corresponde ao código do commit `e42146a84834419c227d181300a0dfab0baa5434`. O hash está em [SHA256SUMS](SHA256SUMS). Para verificar em Linux:
 
 ```sh
 cd downloads
