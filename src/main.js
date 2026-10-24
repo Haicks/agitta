@@ -37,6 +37,12 @@ let sessionGeneration = 0;
 const route = () => location.hash.slice(1) || 'feed';
 const initials = (name) => esc(name.split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase());
 const avatar = (name, cls = '') => `<span class="avatar ${cls}" aria-hidden="true">${initials(name)}</span>`;
+function storeMode(mode) {
+  try {
+    if (mode) localStorage.setItem('agitta-mode', mode);
+    else localStorage.removeItem('agitta-mode');
+  } catch { /* A storage restriction must never prevent logout or switching mode. */ }
+}
 
 function toast(message) {
   const element = document.querySelector('#toast');
@@ -157,8 +163,27 @@ function showCreateDialog() {
 }
 
 function showEventDialog(id) {
+  if (/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(id)) id = id.toLowerCase();
+  const requestedRoute = route();
   const event = state.events.find((item) => item.id === id);
-  if (!event) { if (!state.loading) showDialog('Esse rolê não está no radar.', '<p>O evento pode ter passado ou não estar mais disponível.</p><a class="button button-secondary" href="#feed">Voltar para o feed</a>'); return; }
+  if (!event) {
+    if (state.loading) return;
+    if (state.error) { showDialog('Não foi possível abrir esse rolê.', `<p>${esc(state.error)}</p><a class="button button-secondary" href="#feed">Voltar para o feed</a>`); return; }
+    showDialog('Buscando esse rolê…', '<p role="status">Buscando as informações do evento.</p>');
+    const backend = state.backend;
+    const generation = sessionGeneration;
+    backend.getEventsByIds([id]).then((events) => {
+      if (generation !== sessionGeneration || backend !== state.backend || route() !== requestedRoute) return;
+      root.querySelector('dialog')?.remove();
+      if (events.length) { state.events.push(...events); showEventDialog(id); }
+      else showDialog('Esse rolê não está no radar.', '<p>O evento pode ter passado ou não estar mais disponível.</p><a class="button button-secondary" href="#feed">Voltar para o feed</a>');
+    }).catch((error) => {
+      if (generation !== sessionGeneration || backend !== state.backend || route() !== requestedRoute) return;
+      root.querySelector('dialog')?.remove();
+      showDialog('Não foi possível abrir esse rolê.', `<p>${esc(error.message)}</p><a class="button button-secondary" href="#feed">Voltar para o feed</a>`);
+    });
+    return;
+  }
   const saved = state.saved.includes(id);
   const date = formatDate(event.starts_at);
   showDialog('Tá no radar ↗', `${eventArt(event, true)}<span class="eyebrow">${esc(CATEGORIES[event.category])} · ${esc(event.region)}</span><h2 class="detail-title">${esc(event.title)}</h2><p class="detail-description">${esc(event.description)}</p><div class="detail-facts"><div class="fact">${icon('clock')}<div><strong>Quando?</strong><span>${date.full} · Brasília</span></div></div><div class="fact">${icon('pin')}<div><strong>${esc(event.venue)}</strong><span>${esc(event.address)}</span><a class="text-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.address)}" target="_blank" rel="noopener noreferrer">Abrir no mapa ↗</a></div></div><div class="fact">${icon('bolt')}<div><strong>${formatPrice(event.price)}</strong><span>Classificação: ${event.age_rating === 'Livre' ? 'Livre' : `${esc(event.age_rating)} anos`}</span></div></div></div><div class="detail-author">${avatar(event.author_name)}<span>Publicado por <strong>${esc(event.author_name)}</strong></span></div><div class="modal-footer"><button class="button ${saved ? 'button-secondary' : 'button-primary'}" data-save="${esc(event.id)}" aria-pressed="${saved}">${icon('save')} ${saved ? 'Remover dos salvos' : 'Salvar esse rolê'}</button></div>`);
@@ -181,10 +206,20 @@ async function loadEvents() {
   try {
     const [events, saved] = await Promise.all([backend.listEvents(), backend.getSavedIds()]);
     if (!isCurrent()) return;
+    const missing = saved.filter((id) => !events.some((event) => event.id === id));
+    if (missing.length) events.push(...await backend.getEventsByIds(missing));
+    if (!isCurrent()) return;
+    events.sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
     state.events = events;
     state.saved = saved;
   } catch (error) { if (isCurrent()) state.error = error.message; }
-  finally { if (isCurrent()) { state.loading = false; render(); } }
+  finally {
+    if (isCurrent()) {
+      state.loading = false;
+      // A background feed response must not replace a form the user is editing.
+      if (route() !== 'create' || !root.querySelector('#event-form')) render();
+    }
+  }
 }
 
 async function enterDemo(preserveRoute = false) {
@@ -194,7 +229,7 @@ async function enterDemo(preserveRoute = false) {
   state.demo = true;
   state.backend = demoBackend();
   state.user = (await state.backend.getSession()).user;
-  try { localStorage.setItem('agitta-mode', 'demo'); } catch { /* Demo reports storage errors in its data operations. */ }
+  storeMode('demo');
   if (!preserveRoute) location.hash = 'feed';
   await loadEvents();
 }
@@ -209,8 +244,11 @@ function watchAuth() {
       if (state.demo || generation !== authGeneration || backend !== state.backend) return;
       const changed = state.user?.id !== session?.user?.id;
       state.user = session?.user || null;
-      if (changed && state.user) loadEvents();
-      else if (!state.user) { state.events = []; state.saved = []; render(); }
+      if (changed) {
+        state.events = []; state.saved = [];
+        if (state.user) loadEvents();
+        else render();
+      }
     }, 0);
   });
 }
@@ -249,7 +287,7 @@ root.addEventListener('click', async (event) => {
       ++authGeneration;
       state.unsubscribe?.();
       state.demo = false; state.user = null; state.events = []; state.saved = []; state.query = ''; state.category = 'all';
-      localStorage.removeItem('agitta-mode');
+      storeMode(null);
       state.backend = backendConfigured ? liveBackend() : null;
       if (state.backend) watchAuth();
       location.hash = 'login'; render();
@@ -261,7 +299,7 @@ root.addEventListener('click', async (event) => {
       const saved = await state.backend.toggleSaved(button.dataset.save);
       if (generation !== sessionGeneration || userId !== state.user?.id) return;
       state.saved = saved;
-      render();
+      if (route() !== 'create' || !root.querySelector('#event-form')) render();
     }
   } catch (error) { toast(error.message); button.disabled = false; }
 });
@@ -289,7 +327,7 @@ root.addEventListener('submit', async (event) => {
       state.backend = liveBackend();
       const backend = state.backend;
       const isCurrent = () => generation === sessionGeneration && backend === state.backend && !state.demo;
-      localStorage.removeItem('agitta-mode');
+      storeMode(null);
       let session;
       if (form.dataset.mode === 'signup') {
         const result = await backend.signUp(values);
@@ -325,7 +363,12 @@ root.addEventListener('submit', async (event) => {
 });
 
 window.addEventListener('hashchange', render);
-document.addEventListener('backbutton', () => { location.hash = 'feed'; }, false);
+document.addEventListener('backbutton', (event) => {
+  event.preventDefault();
+  if (state.user && route() !== 'feed') location.hash = 'feed';
+  else if (!state.user && route() === 'signup') location.hash = 'login';
+  else navigator.app?.exitApp?.();
+}, false);
 
 async function init() {
   render();
@@ -333,13 +376,17 @@ async function init() {
   try { demo = localStorage.getItem('agitta-mode') === 'demo'; } catch { /* UI is still usable without storage. */ }
   if (demo) { await enterDemo(true); return; }
   if (!backendConfigured) return;
+  const generation = sessionGeneration;
   try {
     state.backend = liveBackend();
-    state.user = (await state.backend.getSession())?.user || null;
+    const backend = state.backend;
+    const session = await backend.getSession();
+    if (generation !== sessionGeneration || state.demo || backend !== state.backend) return;
+    state.user = session?.user || null;
     watchAuth();
     if (state.user) await loadEvents();
-  } catch (error) { toast(error.message); }
-  render();
+    else render();
+  } catch (error) { if (generation === sessionGeneration) { toast(error.message); render(); } }
 }
 
 init();

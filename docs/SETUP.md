@@ -42,12 +42,14 @@ Os testes conectados criam contas temporárias, exercitam autenticação e banco
 ### Projeto hospedado
 
 1. Crie um projeto Supabase ou use um existente destinado ao Agitta.
-2. No SQL Editor, execute o arquivo completo `supabase/migrations/001_initial.sql`. O esquema cria as tabelas, índices e políticas RLS. Não desative RLS para corrigir erros de acesso.
+2. No SQL Editor, execute as migrações de `supabase/migrations/` em ordem numérica, uma vez cada (`001_initial.sql`, depois `002_finite_event_dates.sql`). O esquema cria as tabelas, índices, políticas RLS e validações de data. Em um projeto já configurado, execute somente as migrações ainda não aplicadas. Não desative RLS para corrigir erros de acesso.
 3. Em Authentication, habilite o provedor de e-mail/senha. Mantenha a confirmação de e-mail habilitada. Configure o Site URL e os redirecionamentos permitidos conforme o endereço usado no desenvolvimento/deploy. Nesta versão, confirme pelo link recebido e depois entre no aplicativo com e-mail e senha; não é necessário abrir uma sessão por deep link.
 4. Copie `.env.example` para `.env.local`, sem substituir um arquivo local existente. Preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` com a URL e a chave **pública** anon/publishable do projeto.
 5. Reinicie o servidor Vite. Para Cordova, gere o build novamente após qualquer mudança dessas variáveis.
 
 Não coloque a chave `service_role`, chaves `sb_secret_`, senha do banco ou credenciais administrativas no frontend. Variáveis `VITE_*` são incorporadas no JavaScript distribuído. A autorização dos dados depende das políticas RLS do SQL, não do sigilo da chave pública.
+
+O Vite verifica URL e formato da chave antes de iniciar o servidor ou gerar o build. Chaves administrativas, configuração incompleta e origens fora da CSP são rejeitadas sem imprimir seus valores. Para usar somente a demonstração, deixe as duas variáveis vazias.
 
 No ambiente de nuvem, forneça os dois valores em **configurações do ambiente**. Se a rede for restrita, adicione o hostname exato do projeto, por exemplo `seu-projeto.supabase.co`, aos domínios permitidos. A instalação das dependências precisa de `registry.npmjs.org`; o acesso Git usa a autenticação já fornecida pela plataforma.
 

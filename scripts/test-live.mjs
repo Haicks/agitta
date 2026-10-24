@@ -66,6 +66,11 @@ try {
   const pastInsert = await request('/rest/v1/events', { method: 'POST', token: owner.token, body: { ...event, starts_at: new Date(Date.now() - 86400000).toISOString() } });
   assert.equal(pastInsert.status, 403);
   pass('Evento no passado rejeitado pelo banco');
+  for (const starts_at of ['infinity', '10000-01-01T00:00:00Z']) {
+    const invalidDate = await request('/rest/v1/events', { method: 'POST', token: owner.token, body: { ...event, starts_at } });
+    assert.equal(invalidDate.status, 400);
+    pass('Data não renderizável rejeitada pelo banco');
+  }
   const published = await request('/rest/v1/events', { method: 'POST', token: owner.token, body: event });
   assert.equal(published.status, 201);
   const eventId = published.data[0].id;

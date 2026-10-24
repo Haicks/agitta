@@ -22,9 +22,11 @@ test('event validation normalizes input and rejects invalid publish requests', (
   for (const patch of [
     { title: 'a' }, { description: 'curta' }, { category: 'admin' }, { price: -1 },
     { price: '' }, { price: 'abc' }, { price: Infinity }, { age_rating: '99' },
+    { price: null }, { price: true }, { price: [] },
     { starts_at: 'bad date' }, { starts_at: '2000-01-01T18:00' },
     { starts_at: '2099-02-30T18:00' }, { starts_at: '2099-12-02' },
     { starts_at: '2099-12-02T24:00' },
+    { starts_at: '9999-12-31T23:59' },
   ]) assert.throws(() => validateEvent({ ...input(), ...patch }));
 });
 
@@ -70,4 +72,25 @@ test('demo recovers corrupted local data and reports storage failures', async ()
   assert.equal((await demoBackend(corrupted).listEvents()).length, 5);
   const full = { getItem: () => null, setItem() { throw new Error('QuotaExceededError'); } };
   await assert.rejects(() => demoBackend(full).listEvents(), /Não foi possível salvar/);
+});
+
+test('demo repairs malformed records and renews expired samples without losing user posts', async () => {
+  const storage = memoryStorage();
+  const demo = demoBackend(storage);
+  const created = await demo.createEvent(input());
+  await demo.toggleSaved(created.id);
+  const stored = JSON.parse(storage.getItem('agitta-demo-v1'));
+  stored.events.push(null, {}, { title: 'broken' });
+  stored.events.find((event) => event?.id === 'demo-eixo').starts_at = '2000-01-01T12:00:00Z';
+  stored.saved.push(null, 'missing', created.id);
+  storage.setItem('agitta-demo-v1', JSON.stringify(stored));
+  const restored = demoBackend(storage);
+  assert.equal((await restored.listEvents()).length, 6);
+  assert.deepEqual(await restored.getSavedIds(), [created.id]);
+  assert.equal((await restored.getEventsByIds([created.id]))[0].title, created.title);
+  assert.ok((await restored.listEvents()).every((event) => new Date(event.starts_at) > new Date()));
+});
+
+test('demo explicitly reports unavailable storage rather than silently losing changes', async () => {
+  await assert.rejects(() => demoBackend(null).listEvents(), /armazenamento local está indisponível/);
 });

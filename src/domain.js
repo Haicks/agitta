@@ -26,6 +26,7 @@ export function brasiliaDate(value) {
   if (hours > 23 || minutes > 59) throw new Error('Informe um horário válido para o evento.');
   const date = new Date(local ? `${value}-03:00` : value);
   if (!Number.isFinite(date.getTime())) throw new Error('Informe uma data válida para o evento.');
+  if (date.getUTCFullYear() > 9999) throw new Error('Informe uma data válida para o evento.');
   // Date silently rolls February 30 to March. Reject that instead of publishing
   // a different day than the one typed by the user.
   const [year, month, day] = value.slice(0, 10).split('-').map(Number);
@@ -45,7 +46,7 @@ export function validateEvent(input, now = Date.now()) {
   if (!Object.hasOwn(CATEGORIES, input.category)) throw new Error('Escolha uma categoria válida.');
   const age_rating = String(input.age_rating ?? 'Livre');
   if (!AGE_RATINGS.includes(age_rating)) throw new Error('Escolha uma classificação indicativa válida.');
-  const price = typeof input.price === 'string' && input.price.trim() === ''
+  const price = !['number', 'string'].includes(typeof input.price) || (typeof input.price === 'string' && input.price.trim() === '')
     ? NaN
     : Number(input.price);
   if (!Number.isFinite(price) || price < 0 || price > 100000) {

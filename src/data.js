@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { validateEvent } from './domain.js';
+import { validateEvent, CATEGORIES, AGE_RATINGS } from './domain.js';
 
 const configuration = import.meta.env ?? {};
 const url = configuration.VITE_SUPABASE_URL?.trim();
@@ -49,6 +49,7 @@ export function liveBackend() {
   const client = createClient(url, key, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
   });
+  let savedQueue = Promise.resolve();
   async function requireUser() {
     const { data, error } = await client.auth.getSession();
     throwIfError(error);
@@ -57,9 +58,14 @@ export function liveBackend() {
   }
   async function getSavedIds() {
     const user = await requireUser();
-    const { data, error } = await client.from('saved_events').select('event_id').eq('user_id', user.id);
-    throwIfError(error);
-    return data.map((row) => row.event_id);
+    const ids = [];
+    for (let offset = 0; ; offset += 1000) {
+      const { data, error } = await client.from('saved_events').select('event_id').eq('user_id', user.id)
+        .order('event_id').range(offset, offset + 999);
+      throwIfError(error);
+      ids.push(...data.map((row) => row.event_id));
+      if (data.length < 1000) return ids;
+    }
   }
   liveInstance = {
     async getSession() {
@@ -89,7 +95,7 @@ export function liveBackend() {
       return { session: normalizedSession(data.session), confirmationRequired: !data.session };
     },
     async signOut() {
-      const { error } = await client.auth.signOut();
+      const { error } = await client.auth.signOut({ scope: 'local' });
       throwIfError(error);
     },
     async listEvents() {
@@ -99,6 +105,19 @@ export function liveBackend() {
         .order('starts_at', { ascending: true }).limit(100);
       throwIfError(error);
       return data.map(normalizeEvent);
+    },
+    async getEventsByIds(ids) {
+      const valid = [...new Set(ids)].filter((id) => typeof id === 'string' && /^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(id));
+      const events = [];
+      for (let index = 0; index < valid.length; index += 100) {
+        const { data, error } = await client.from('events')
+          .select('*, profiles!events_author_id_fkey(name)')
+          .in('id', valid.slice(index, index + 100))
+          .gte('starts_at', new Date().toISOString());
+        throwIfError(error);
+        events.push(...data.map(normalizeEvent));
+      }
+      return events;
     },
     async createEvent(input) {
       const event = validateEvent(input);
@@ -110,15 +129,25 @@ export function liveBackend() {
       return normalizeEvent(data);
     },
     getSavedIds,
-    async toggleSaved(eventId) {
-      const user = await requireUser();
-      const saved = await getSavedIds();
-      const request = saved.includes(eventId)
-        ? client.from('saved_events').delete().eq('user_id', user.id).eq('event_id', eventId)
-        : client.from('saved_events').insert({ user_id: user.id, event_id: eventId });
-      const { error } = await request;
-      throwIfError(error);
-      return saved.includes(eventId) ? saved.filter((id) => id !== eventId) : [...saved, eventId];
+    toggleSaved(eventId) {
+      // Serialize reads and writes so quick taps on different cards cannot
+      // overwrite the UI with an older snapshot of the saved-event list.
+      const requestedUser = requireUser().then((user) => ({ user }), (error) => ({ error }));
+      const operation = savedQueue.then(async () => {
+        const requested = await requestedUser;
+        if (requested.error) throw requested.error;
+        const user = requested.user;
+        if ((await requireUser()).id !== user.id) throw new Error('Sua sessão mudou. Tente salvar novamente.');
+        const saved = await getSavedIds();
+        const request = saved.includes(eventId)
+          ? client.from('saved_events').delete().eq('user_id', user.id).eq('event_id', eventId)
+          : client.from('saved_events').insert({ user_id: user.id, event_id: eventId });
+        const { error } = await request;
+        throwIfError(error);
+        return getSavedIds();
+      });
+      savedQueue = operation.catch(() => {});
+      return operation;
     },
   };
   return liveInstance;
@@ -126,6 +155,16 @@ export function liveBackend() {
 
 const DEMO_KEY = 'agitta-demo-v1';
 const demoUser = { id: 'demo-user', email: '', name: 'Você' };
+
+function newEventId() {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  // randomUUID is unavailable in older WebViews and HTTP LAN previews.
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 15) | 64;
+  bytes[8] = (bytes[8] & 63) | 128;
+  const hex = [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
 
 function seedEvents() {
   const startsAt = (days, hour) => {
@@ -167,14 +206,34 @@ function seedEvents() {
   ].map((event) => ({ ...event, created_at: new Date().toISOString() }));
 }
 
-export function demoBackend(storage = globalThis.localStorage) {
+export function demoBackend(storage) {
+  if (storage === undefined) {
+    try { storage = globalThis.localStorage; } catch { storage = null; }
+  }
   function read() {
+    if (typeof storage?.getItem !== 'function' || typeof storage?.setItem !== 'function') {
+      throw new Error('O armazenamento local está indisponível neste aparelho. Permita o armazenamento para usar a demonstração.');
+    }
     let value;
     try { value = JSON.parse(storage?.getItem(DEMO_KEY) || 'null'); } catch { value = null; }
+    const before = JSON.stringify(value);
     if (!value || !Array.isArray(value.events) || !Array.isArray(value.saved)) {
       value = { events: seedEvents(), saved: [] };
-      persist(value);
     }
+    const fields = ['id', 'title', 'description', 'venue', 'address', 'region', 'author_id', 'author_name'];
+    value.events = value.events.filter((event) => event && fields.every((field) => typeof event[field] === 'string' && event[field].trim())
+      && Number.isFinite(new Date(event.starts_at).getTime()) && event.starts_at != null
+      && Object.hasOwn(CATEGORIES, event.category)
+      && typeof event.price === 'number' && Number.isFinite(event.price) && event.price >= 0
+      && AGE_RATINGS.includes(event.age_rating));
+    // Keep the prototype useful on later visits without deleting user posts.
+    const events = new Map(value.events.map((event) => [event.id, event]));
+    for (const sample of seedEvents()) {
+      if (!events.has(sample.id) || new Date(events.get(sample.id).starts_at).getTime() <= Date.now()) events.set(sample.id, sample);
+    }
+    value.events = [...events.values()];
+    value.saved = [...new Set(value.saved)].filter((id) => typeof id === 'string' && events.has(id));
+    if (before !== JSON.stringify(value)) persist(value);
     return value;
   }
   function persist(value) {
@@ -191,9 +250,12 @@ export function demoBackend(storage = globalThis.localStorage) {
       return read().events.filter((event) => new Date(event.starts_at).getTime() > Date.now())
         .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
     },
+    async getEventsByIds(ids) {
+      return (await this.listEvents()).filter((event) => ids.includes(event.id));
+    },
     async createEvent(input) {
       const event = {
-        ...validateEvent(input), id: crypto.randomUUID(), author_id: demoUser.id,
+        ...validateEvent(input), id: newEventId(), author_id: demoUser.id,
         author_name: demoUser.name, created_at: new Date().toISOString(),
       };
       const value = read();

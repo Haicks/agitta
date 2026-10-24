@@ -106,6 +106,7 @@ test('salvar e remover eventos funciona e o estado sobrevive ao recarregamento',
 
 test('publicação valida data, exibe texto seguro e persiste o novo evento local', async ({ page }) => {
   await enterDemo(page);
+  await page.evaluate(() => { Object.defineProperty(crypto, 'randomUUID', { value: undefined, configurable: true }); });
   await page.locator('.mobile-nav').getByRole('link', { name: 'Publicar', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();

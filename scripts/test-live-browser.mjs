@@ -144,6 +144,44 @@ try {
   await expect(page.locator('.event-card').filter({ hasText: title })).toHaveCount(1);
   await expect(page.locator('.event-card').filter({ hasText: title }).getByRole('button', { name: `Remover dos salvos: ${title}`, exact: true })).toHaveAttribute('aria-pressed', 'true');
   pass('Login posterior recupera eventos salvos no banco');
+
+  // Put the saved event outside the feed's first 100 rows and create another
+  // event only reachable by its URL. All rows belong to this temporary account.
+  const baseEvent = {
+    author_id: userId, description: 'Evento temporário para validar paginação e concorrência.',
+    venue: 'Local de teste', address: 'SQN 208, Asa Norte, Brasília DF',
+    region: 'Asa Norte', category: 'culture', price: 0, age_rating: 'Livre',
+  };
+  const rows = Array.from({ length: 101 }, (_, index) => ({
+    ...baseEvent, title: `Teste de página ${index}`,
+    starts_at: new Date(Date.now() + (index === 100 ? 14 : 1) * 86400000).toISOString(),
+  }));
+  const inserted = await fetch(new URL('/rest/v1/events', api), {
+    method: 'POST',
+    headers: { apikey: status.ANON_KEY, Authorization: `Bearer ${signup.access_token}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+    body: JSON.stringify(rows),
+  });
+  assert.equal(inserted.status, 201, 'Preparação dos eventos temporários deve funcionar.');
+  const extra = await inserted.json();
+  await page.reload();
+  await expect(page.locator('.event-card').filter({ hasText: title })).toHaveCount(1);
+  pass('Salvo fora dos primeiros 100 eventos continua visível após recarregar');
+
+  const deepEvent = extra.find((event) => event.title === 'Teste de página 100');
+  await page.goto(new URL(`/#event/${deepEvent.id.toUpperCase()}`, app).href);
+  await expect(page.getByRole('dialog').getByRole('heading', { name: deepEvent.title, exact: true })).toBeVisible();
+  pass('Link direto encontra evento fora da primeira página do feed');
+  await page.keyboard.press('Escape');
+  const pair = extra.slice(0, 2).map((event) => event.id);
+  await page.evaluate((ids) => {
+    for (const id of ids) document.querySelector(`button[data-save="${id}"]`).click();
+  }, pair);
+  for (const id of pair) await expect(page.locator(`button[data-save="${id}"]`)).toHaveAttribute('aria-pressed', 'true');
+  await page.locator('.mobile-nav').getByRole('link', { name: /Salvos/ }).click();
+  await expect(page.locator('.event-card')).toHaveCount(3);
+  await page.reload();
+  await expect(page.locator('.event-card')).toHaveCount(3);
+  pass('Salvar eventos rapidamente mantém os três favoritos no banco e na tela');
   assert.deepEqual(errors, [], 'O fluxo conectado não deve lançar erros de JavaScript.');
   pass('Fluxo completo sem erros de JavaScript');
 } catch (error) {
