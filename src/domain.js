@@ -43,7 +43,7 @@ export function validateEvent(input, now = Date.now()) {
   const venue = textField(input, 'venue', 'O nome do local', 2, 100);
   const address = textField(input, 'address', 'O endereço', 5, 240);
   const region = textField(input, 'region', 'A região', 2, 60);
-  if (!Object.hasOwn(CATEGORIES, input.category)) throw new Error('Escolha uma categoria válida.');
+  if (!Object.prototype.hasOwnProperty.call(CATEGORIES, input.category)) throw new Error('Escolha uma categoria válida.');
   const age_rating = String(input.age_rating ?? 'Livre');
   if (!AGE_RATINGS.includes(age_rating)) throw new Error('Escolha uma classificação indicativa válida.');
   const price = !['number', 'string'].includes(typeof input.price) || (typeof input.price === 'string' && input.price.trim() === '')

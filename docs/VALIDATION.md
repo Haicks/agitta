@@ -5,7 +5,7 @@ Executada em 24/10/2026 no ambiente de desenvolvimento Linux, com Node 24, Chrom
 | Verificação | Resultado |
 | --- | --- |
 | `npm test` | 10 testes passaram; nenhum ignorado |
-| `npm run test:e2e` | 12 testes passaram; nenhum ignorado |
+| `npm run test:e2e` | 14 testes passaram; nenhum ignorado |
 | `npm run test:live` | 16 verificações reais de autenticação, dados e RLS passaram |
 | `npm run test:live:browser` | 12 verificações passaram na interface conectada |
 | `BASE_URL=http://127.0.0.1:4173 npm run test:live:browser` | As mesmas 12 verificações passaram no build de produção |
@@ -22,4 +22,6 @@ A revisão inclui regressões para restauração lenta de sessão, preservação
 
 O APK de demonstração foi compilado com as variáveis Supabase vazias para não apontar o celular ao loopback do computador. A aplicação conectada e o protótipo compartilham a interface; os dados da demonstração são fictícios e ficam no aparelho.
 
-Não foram executados testes em aparelho/emulador Android, entrega de e-mails nem integração com um projeto hospedado. Não há publicação em loja, assinatura de release ou implantação de produção.
+A versão anterior foi instalada em emulador Android 11 (API 30), com WebView 83.0.4103.120, onde foi reproduzida a falha `Object.hasOwn is not a function`. A versão 0.1.1 elimina essa dependência, inclui bundle de compatibilidade e testa a recuperação quando o JavaScript não carrega. O pacote também inclui a lista de plugins necessária ao Cordova e aguarda a inicialização nativa.
+
+Não foram executados testes em aparelho físico, entrega de e-mails nem integração com um projeto hospedado. Não há publicação em loja, assinatura de release ou implantação de produção.

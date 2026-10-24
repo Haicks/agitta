@@ -115,3 +115,25 @@ VITE_SUPABASE_URL='' VITE_SUPABASE_ANON_KEY='' npm run android:build
 Esse APK abre as telas de login e permite navegar por **Explorar demonstração**, sem fingir uma autenticação real. Teste a instalação, o teclado e a navegação em um Android físico antes de distribuir.
 
 `android:build` rejeita a configuração local antes de empacotar e aceita somente um projeto HTTPS `*.supabase.co` com chave pública ou a demonstração sem conexão. Domínios personalizados exigem ajustar explicitamente essa validação, a CSP e a allowlist do Cordova.
+
+### Tela vazia e compatibilidade
+
+A versão 0.1.1 inclui um bundle compatível com WebViews antigos, polyfills locais e inicialização que aguarda o `deviceready` do Cordova. O hook de preparação garante a presença de `cordova_plugins.js` mesmo sem plugins instalados. A CSP continua restrita e autoriza somente os hashes dos pequenos scripts de inicialização gerados pelo plugin oficial do Vite.
+
+Se um arquivo não carregar, a tela inicial mostra recuperação e detalhes para suporte. Ainda é recomendado manter Chrome e Android System WebView atualizados. O APK tem `versionCode` 101 e pode atualizar a versão 0.1.0 com a mesma assinatura de desenvolvimento.
+
+### Verificação no emulador Android
+
+O teste abaixo utiliza um **emulador já inicializado**, com o APK de demonstração instalado e depuração WebView habilitada pelo build debug. Ele recusa números de série de telefones pessoais, testa a interface no WebView real e remove somente a publicação temporária criada pelo próprio teste.
+
+```sh
+. scripts/android-env.sh
+# Pacotes opcionais para criar um emulador de teste:
+sdkmanager 'emulator' 'system-images;android-30;default;x86_64'
+avdmanager create avd --name agitta-api30 --package 'system-images;android-30;default;x86_64'
+# Inicialize esse AVD e aguarde sys.boot_completed=1.
+adb -s emulator-5554 install -r platforms/android/app/build/outputs/apk/debug/app-debug.apk
+npm run test:android
+```
+
+Use `ANDROID_SERIAL=emulator-5556` para selecionar outro emulador. O ADB requer acesso de escrita ao seu diretório padrão de configuração; a instalação e o teste devem ser feitos na mesma sessão com as ferramentas Android ativadas. Sem aceleração de hardware, o primeiro boot pode demorar vários minutos.

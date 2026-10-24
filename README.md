@@ -1,6 +1,6 @@
 # Agitta
 
-O próximo rolê de Brasília começa aqui. MVP mobile em **Cordova, HTML, CSS e JavaScript**, com Supabase para contas e dados compartilhados.
+O próximo rolê de Brasília começa aqui. MVP mobile em **Cordova, HTML, CSS e JavaScript**, com Supabase para contas e dados compartilhados. A versão **0.1.1** corrige a compatibilidade com WebViews antigos e a inicialização nativa.
 
 [Baixar APK de demonstração para Android](https://github.com/Haicks/agitta/raw/refs/heads/main/downloads/agitta-demo-debug.apk) · [Instruções de download](downloads/README.md)
 

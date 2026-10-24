@@ -1,6 +1,6 @@
 {
   "name": "agitta",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "O próximo rolê de Brasília, na sua mão.",
   "type": "module",
@@ -18,6 +18,7 @@
     "backend:stop": "docker compose --env-file .tools/supabase-local/.env -f supabase/local/compose.yml stop",
     "test:live": "node scripts/test-live.mjs",
     "test:live:browser": "node scripts/test-live-browser.mjs",
+    "test:android": "node scripts/test-android.mjs",
     "android:setup": "bash scripts/install-android.sh",
     "android:add": "npm run build && cordova platform add android@14.0.1 --nosave",
     "android:prepare": "npm run build && cordova prepare android",
@@ -28,9 +29,10 @@
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",
+    "@vitejs/plugin-legacy": "8.2.3",
     "cordova": "13.0.0",
-    "vite": "8.3.5",
-    "cordova-android": "14.0.1"
+    "cordova-android": "14.0.1",
+    "vite": "8.3.5"
   },
   "cordova": {
     "platforms": [

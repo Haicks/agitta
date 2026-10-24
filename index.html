@@ -11,8 +11,10 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app"><main class="startup-screen" id="startup-screen"><div class="startup-card"><span class="startup-brand">✳ agitta</span><h1 id="startup-title">Abrindo o seu próximo rolê…</h1><p id="startup-message" role="status">Só um instante.</p><button class="button button-primary" id="startup-reload" type="button" hidden>Tentar novamente</button><details id="startup-details" hidden><summary>Detalhes para suporte</summary><pre id="startup-error"></pre></details></div></main></div>
+    <noscript>Ative o JavaScript para abrir o Agitta.</noscript>
     <div id="toast" role="status" aria-live="polite"></div>
+    <script src="/startup.js"></script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

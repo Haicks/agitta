@@ -23,12 +23,6 @@ const icons = {
 const icon = (name, cls = '') => `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.bolt}</svg>`;
 const brand = () => `<a class="brand" href="#feed" aria-label="Agitta, início"><span class="brand-mark">${icon('bolt')}</span><span class="brand-word">agitta<span>®</span></span></a>`;
 const root = document.querySelector('#app');
-// Cordova provides this bridge in packaged builds; the web workflow needs no native shim.
-if (location.protocol === 'file:' || (location.protocol === 'https:' && location.hostname === 'localhost' && !location.port)) {
-  const bridge = document.createElement('script');
-  bridge.src = './cordova.js';
-  document.head.append(bridge);
-}
 const state = { backend: null, demo: false, user: null, events: [], saved: [], category: 'all', query: '', loading: false, error: '', unsubscribe: null };
 let toastTimer;
 let loadGeneration = 0;
@@ -318,7 +312,8 @@ root.addEventListener('submit', async (event) => {
   errorBox.hidden = true;
   button.disabled = true;
   button.setAttribute('aria-busy', 'true');
-  const values = Object.fromEntries(new FormData(form));
+  const values = Object.create(null);
+  new FormData(form).forEach((value, key) => { values[key] = value; });
   try {
     if (form.id === 'auth-form') {
       if (!backendConfigured) throw new Error('As contas ainda não estão conectadas. Use “Explorar demonstração” para conhecer o app.');
@@ -363,12 +358,12 @@ root.addEventListener('submit', async (event) => {
 });
 
 window.addEventListener('hashchange', render);
-document.addEventListener('backbutton', (event) => {
+function onNativeBack(event) {
   event.preventDefault();
   if (state.user && route() !== 'feed') location.hash = 'feed';
   else if (!state.user && route() === 'signup') location.hash = 'login';
   else navigator.app?.exitApp?.();
-}, false);
+}
 
 async function init() {
   render();
@@ -389,4 +384,10 @@ async function init() {
   } catch (error) { if (generation === sessionGeneration) { toast(error.message); render(); } }
 }
 
-init();
+function startApp() {
+  document.addEventListener('backbutton', onNativeBack, false);
+  init().catch((error) => window.agittaShowStartupError?.(error.message));
+}
+
+if (window.agittaNativeReady) window.agittaNativeReady.then(startApp, (error) => window.agittaShowStartupError?.(error.message));
+else startApp();

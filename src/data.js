@@ -223,7 +223,7 @@ export function demoBackend(storage) {
     const fields = ['id', 'title', 'description', 'venue', 'address', 'region', 'author_id', 'author_name'];
     value.events = value.events.filter((event) => event && fields.every((field) => typeof event[field] === 'string' && event[field].trim())
       && Number.isFinite(new Date(event.starts_at).getTime()) && event.starts_at != null
-      && Object.hasOwn(CATEGORIES, event.category)
+      && Object.prototype.hasOwnProperty.call(CATEGORIES, event.category)
       && typeof event.price === 'number' && Number.isFinite(event.price) && event.price >= 0
       && AGE_RATINGS.includes(event.age_rating));
     // Keep the prototype useful on later visits without deleting user posts.
