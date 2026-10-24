@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<widget id="br.com.agitta.app" version="0.1.0"
+    xmlns="http://www.w3.org/ns/widgets"
+    xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>Agitta</name>
+    <description>Descubra e compartilhe os rolês de Brasília.</description>
+    <author>Agitta</author>
+    <content src="index.html" />
+    <access origin="https://*.supabase.co" />
+    <allow-navigation href="https://localhost/*" />
+    <allow-intent href="https://*/*" />
+    <allow-intent href="geo:*" />
+    <allow-intent href="mailto:*" />
+    <preference name="scheme" value="https" />
+    <preference name="hostname" value="localhost" />
+    <preference name="AndroidInsecureFileModeEnabled" value="false" />
+    <preference name="AndroidWindowSplashScreenBackground" value="#0f1018" />
+    <preference name="BackgroundColor" value="#0f1018" />
+    <preference name="DisallowOverscroll" value="true" />
+    <engine name="android" spec="14.0.1" />
+</widget>
