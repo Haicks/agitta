@@ -2,6 +2,8 @@
 
 O próximo rolê de Brasília começa aqui. MVP mobile em **Cordova, HTML, CSS e JavaScript**, com Supabase para contas e dados compartilhados.
 
+[Baixar APK de demonstração para Android](https://github.com/Haicks/agitta/raw/refs/heads/main/downloads/agitta-demo-debug.apk) · [Instruções de download](downloads/README.md)
+
 ## O que esta versão inclui
 
 - Cadastro por e-mail e senha, login, confirmação de e-mail e logout.
