@@ -27,4 +27,6 @@ A versão anterior foi instalada em emulador Android 11 (API 30), com WebView 83
 
 O smoke test Android usa CDP para acionar os botões no WebView do aplicativo instalado. Verifica `deviceready`, o arquivo de plugins, a tela de login, o feed com cinco eventos, detalhes, publicação, salvos e saída da demonstração. Não substitui testes de toque, gestos e teclas físicas em um aparelho.
 
+Este ambiente não tem KVM. Durante a emulação por software, o próprio sistema Android apresentou ANRs e comandos de teclado por ADB excederam o prazo. As oito verificações registradas foram concluídas por CDP; a apresentação da janela completa e a interação física ainda precisam de validação em aparelho ou emulador com aceleração.
+
 Não foram executados testes em aparelho físico, entrega de e-mails nem integração com um projeto hospedado. Não há publicação em loja, assinatura de release ou implantação de produção.
