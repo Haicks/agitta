@@ -71,4 +71,4 @@ tests/                       validação e navegação do aplicativo
 dist/                        site gerado; não versionado
 ```
 
-[Captura mobile](docs/screenshots/webapp-mobile.png) · [Captura desktop](docs/screenshots/webapp-desktop.png) · [Validação](docs/VALIDATION.md) · [Próximas etapas](docs/ROADMAP.md).
+[Relatório completo do projeto](docs/RELATORIO_PROJETO.md) · [Captura mobile](docs/screenshots/webapp-mobile.png) · [Captura desktop](docs/screenshots/webapp-desktop.png) · [Validação](docs/VALIDATION.md) · [Próximas etapas](docs/ROADMAP.md).
