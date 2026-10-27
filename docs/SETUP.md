@@ -1,24 +1,19 @@
-# Configuração do Agitta
+# Configuração do Agitta webapp
 
-## Desenvolvimento web
+## Desenvolvimento
 
-Requisitos: Node.js 24 LTS e npm. O ambiente de nuvem já é isolado: utilize o checkout existente; não crie outro worktree para iniciar o aplicativo.
+Use Node.js 24 LTS e npm. No ambiente de nuvem, use o checkout existente em `/workspace/agitta`, sem criar outro worktree.
 
 ```sh
-cd /workspace/agitta
 npm ci
 npm run dev
 ```
 
-Fora do ambiente de nuvem, execute os mesmos comandos na raiz onde clonou o repositório. Se o cache padrão do npm não for gravável, use `npm ci --cache /tmp/agitta-npm`.
+A demonstração abre pelo botão **Explorar demonstração**. Os eventos são fictícios; publicações e favoritos desse modo ficam somente no navegador atual. O service worker é registrado apenas no build de produção, para não guardar código de desenvolvimento em cache.
 
-Na tela inicial, **Explorar demonstração** abre o protótipo navegável sem depender de serviços externos. Os eventos são fictícios, e alterações ficam somente no navegador/aparelho atual. Não use esse modo como prova de autenticação ou persistência no servidor.
+## Login e dados locais
 
-## Contas e dados reais: Supabase
-
-### Desenvolvimento local
-
-Use Docker com o plugin Compose. Na raiz do projeto:
+Use Docker com Compose:
 
 ```sh
 npm run backend:start
@@ -26,114 +21,74 @@ npm run backend:configure
 npm run dev
 ```
 
-O primeiro comando sobe PostgreSQL, Supabase Auth (GoTrue), PostgREST e Kong, aguarda as APIs e aplica as migrações uma vez. Uma nova execução preserva contas e eventos no volume Docker. Mudanças em migrações já aplicadas são rejeitadas; adicione outra migração. A API é publicada somente em `127.0.0.1:54321`. Não é uma instalação de produção nem inclui Studio, Storage ou Realtime.
+O backend inclui PostgreSQL, Supabase Auth, PostgREST e Kong. A inicialização aguarda as APIs e aplica migrações pendentes sem apagar dados. Não altere migrações já aplicadas; adicione outra. A API fica em `127.0.0.1:54321`, disponível somente nesta máquina. O loopback do computador não funciona no telefone.
 
-Credenciais locais são geradas em `.tools/supabase-local/`, ignorado pelo Git. `backend:configure` grava **somente URL e chave pública** em `.env.local` e se recusa a sobrescrever configurações diferentes. Não apague `.tools/` mantendo o volume do banco: as credenciais precisam continuar consistentes. A confirmação de e-mail é automática **somente no backend de desenvolvimento**, sem envio de e-mails.
+Credenciais de desenvolvimento são geradas em `.tools/supabase-local/`, ignorado pelo Git. O helper grava somente URL e chave pública em `.env.local`, recusando sobrescrever uma configuração diferente. Preserve esse diretório junto com o volume Docker. Nesse backend, a confirmação de e-mail é automática e nenhuma mensagem é enviada.
 
 ```sh
 npm run test:live
-# Com o Vite em execução, já conectado à configuração local:
+# Com o Vite iniciado e conectado ao backend local:
 npm run test:live:browser
 npm run backend:stop
 ```
 
-Os testes conectados criam contas temporárias, exercitam autenticação e banco e removem seus próprios dados ao terminar. Eles recusam destinos hospedados. Para reiniciar, use `npm run backend:start`; não remova os volumes para parar o serviço.
+Os testes criam e removem suas próprias contas temporárias e recusam destinos hospedados. Parar os serviços não exige apagar os volumes.
 
-### Projeto hospedado
+## Supabase hospedado
 
-1. Crie um projeto Supabase ou use um existente destinado ao Agitta.
-2. No SQL Editor, execute as migrações de `supabase/migrations/` em ordem numérica, uma vez cada (`001_initial.sql`, depois `002_finite_event_dates.sql`). O esquema cria as tabelas, índices, políticas RLS e validações de data. Em um projeto já configurado, execute somente as migrações ainda não aplicadas. Não desative RLS para corrigir erros de acesso.
-3. Em Authentication, habilite o provedor de e-mail/senha. Mantenha a confirmação de e-mail habilitada. Configure o Site URL e os redirecionamentos permitidos conforme o endereço usado no desenvolvimento/deploy. Nesta versão, confirme pelo link recebido e depois entre no aplicativo com e-mail e senha; não é necessário abrir uma sessão por deep link.
-4. Copie `.env.example` para `.env.local`, sem substituir um arquivo local existente. Preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` com a URL e a chave **pública** anon/publishable do projeto.
-5. Reinicie o servidor Vite. Para Cordova, gere o build novamente após qualquer mudança dessas variáveis.
+1. Crie um projeto Supabase destinado ao Agitta.
+2. Aplique as migrações de `supabase/migrations/` em ordem numérica, uma vez cada: `001_initial.sql` e `002_finite_event_dates.sql`. Em projeto existente, execute somente as pendentes. Preserve RLS.
+3. Em Authentication, habilite e-mail/senha, confirmação de e-mail e configure entrega de mensagens. Defina Site URL e redirecionamentos permitidos para a URL final do webapp, incluindo `/agitta/` se usar GitHub Pages. Confirme pelo link recebido e depois entre com e-mail e senha.
+4. Para desenvolver, copie `.env.example` para `.env.local` sem substituir um arquivo existente; preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. Para publicar pelo GitHub Actions, configure esses mesmos nomes em **Settings → Secrets and variables → Actions → Variables**. Ambas são públicas e entram no JavaScript distribuído.
+5. Reinicie Vite após mudar variáveis; para produção, gere e publique outro build.
 
-Não coloque a chave `service_role`, chaves `sb_secret_`, senha do banco ou credenciais administrativas no frontend. Variáveis `VITE_*` são incorporadas no JavaScript distribuído. A autorização dos dados depende das políticas RLS do SQL, não do sigilo da chave pública.
+Use apenas URL HTTPS `*.supabase.co` e chave pública **anon/publishable**. Nunca coloque `service_role`, `sb_secret_`, senha do banco ou credenciais administrativas no frontend. A proteção dos dados depende de RLS. O Vite rejeita configurações incompletas, chaves administrativas e URLs incompatíveis sem imprimir seus valores.
 
-O Vite verifica URL e formato da chave antes de iniciar o servidor ou gerar o build. Chaves administrativas, configuração incompleta e origens fora da CSP são rejeitadas sem imprimir seus valores. Para usar somente a demonstração, deixe as duas variáveis vazias.
+Se a rede da nuvem for restrita, permita o hostname exato do projeto. No aplicativo dos usuários, o navegador se conecta diretamente ao Supabase hospedado.
 
-No ambiente de nuvem, forneça os dois valores em **configurações do ambiente**. Se a rede for restrita, adicione o hostname exato do projeto, por exemplo `seu-projeto.supabase.co`, aos domínios permitidos. A instalação das dependências precisa de `registry.npmjs.org`; o acesso Git usa a autenticação já fornecida pela plataforma.
+## Publicar no GitHub Pages
 
-### Validação de ponta a ponta com Supabase
+O repositório inclui `.github/workflows/pages.yml`. A publicação é manual, não acontece ao fazer commit.
 
-Após aplicar o SQL e configurar as variáveis:
+1. Em **Settings → Pages**, escolha **GitHub Actions** como fonte.
+2. Para contas compartilhadas, configure as duas variáveis públicas do Supabase como descrito acima. Sem ambas, será publicado o protótipo de demonstração.
+3. Abra **Actions → Publicar webapp → Run workflow** e selecione `main`.
+4. O workflow instala dependências, testa a interface e a PWA, gera o build com base `/agitta/`, envia `dist/` e publica. Use a URL exibida na etapa `deploy` somente depois de ela concluir.
 
-1. Cadastre uma conta com e-mail válido; confirme o e-mail e faça login.
-2. Publique um evento futuro com título, categoria, local, endereço e classificação etária.
-3. Atualize o aplicativo e confirme que o evento continua no feed.
-4. Salve o evento, faça logout e entre novamente; confira os salvos.
-5. Com uma segunda conta, confira o evento compartilhado e que os salvos da primeira conta não aparecem.
-6. Confira no Supabase que um cliente sem sessão não consegue inserir eventos ou consultar os salvos de outros usuários.
+Não é necessário instalar Android SDK, Java ou Cordova. O endereço do repositório não é o endereço do aplicativo; a ativação do Pages e a execução do workflow ainda são necessárias.
 
-A validação local não verifica o envio de e-mail, as configurações nem o acesso ao projeto hospedado. Faça esse roteiro antes da distribuição pública.
+## Outras hospedagens estáticas
 
-## Testes e build web
+Use todos os arquivos de `dist/` em um serviço HTTPS. Não envie `.env.local`, `.tools/` ou credenciais de administração.
+
+```sh
+npm run build:public
+```
+
+Esse comando rejeita o backend local, que não funciona no celular nem em um site HTTPS. Deixe as duas variáveis Supabase vazias para gerar somente a demonstração. Para hospedar em uma subpasta, defina `AGITTA_BASE_PATH=/agitta/` no ambiente do build; na raiz, o padrão é `/`. As rotas usam `#`, dispensando reescrita do servidor.
+
+Para ver o build local conectado ao Supabase local, use `npm run build` e `npm run preview`. Esse build é exclusivo para testes nesta máquina. Não gere outro build em `dist/` enquanto o preview estiver sendo testado.
+
+## Instalação, offline e atualização
+
+- Android: abra em Chrome/Edge e toque em **Instalar Agitta** ou na opção de instalação do menu.
+- iPhone/iPad: abra no Safari, toque em **Compartilhar → Adicionar à Tela de Início** e, se oferecido, ative **Abrir como App**.
+- Computador: use o botão de instalação na barra de endereço ou o menu do navegador.
+
+A disponibilidade da instalação depende do navegador. HTTPS é necessário; localhost é a exceção para testes. O site continua acessível pelo navegador sem instalação. O suporte mínimo considerado pelo build é Chrome 83 e Safari 15.4; a instalação e a aparência final precisam de conferência em aparelhos reais.
+
+Após uma primeira abertura online bem-sucedida, os arquivos públicos ficam disponíveis offline. O modo demonstração permite explorar, salvar e publicar eventos fictícios locais. Contas e dados compartilhados precisam de conexão: não há fila de publicação offline nem cache da API de autenticação/dados. As configurações de sessão e a demonstração continuam usando o armazenamento local do navegador.
+
+Quando houver uma versão nova, **Nova versão disponível · Atualizar** permite aplicá-la. Termine ou copie o formulário antes de tocar: a atualização escolhida recarrega a página. Enquanto você não tocar, o formulário permanece aberto. O cache é isolado por escopo de instalação e versão; sua limpeza não remove os dados locais da demonstração.
+
+## Testes
 
 ```sh
 npm test
 npm run test:e2e
-npm run build
-npm run preview
+npm run test:web
 ```
 
-O teste de navegador usa Playwright. Se não houver Chromium disponível no sistema, instale o navegador com `npx playwright install chromium`, preservando a verificação TLS. Consulte o arquivo de configuração do Playwright para a seleção do executável. A saída do build fica em `www/`; dependências, processos em execução e builds gerados não são versionados.
+Se necessário, instale Chromium: `npx playwright install chromium`. `test:web` gera um build de demonstração isolado em `.tools/web-test-dist`, serve em `/agitta/` na porta 4175 e testa CSS, instalação, offline, cache e atualização. Não altera `.env.local` nem o build normal.
 
-## Android com Cordova
-
-A plataforma está fixada em `cordova-android@14.0.1`:
-
-| Ferramenta | Versão esperada |
-| --- | --- |
-| Node.js | 24 LTS (plataforma exige pelo menos 20.5) |
-| JDK | 17 |
-| Android SDK Platform | 35 |
-| Android SDK Build Tools | 35.0.0 |
-| Gradle | 8.13, utilizado pelo wrapper da plataforma |
-| Android mínimo | 7.0 / API 24 |
-
-No ambiente Linux x86_64, o instalador abaixo prepara ferramentas isoladas em `/workspace/.cache/agitta-android`, com downloads oficiais e checksums verificados. Ele aceita as licenças padrão do SDK ao instalar os pacotes. Requer Bash, curl, Python 3, unzip, dpkg-deb e Node. `AGITTA_ANDROID_HOME` pode escolher outro diretório gravável. Em outras plataformas, instale as ferramentas oficiais e configure `JAVA_HOME`, `ANDROID_HOME` e `PATH`.
-
-```sh
-npm run android:setup
-. scripts/android-env.sh
-npm run android:add
-npx cordova requirements android
-npm run android:prepare
-npm run android:build
-```
-
-Adicione a plataforma apenas uma vez por checkout. Após um build bem-sucedido, o APK de desenvolvimento fica em `platforms/android/app/build/outputs/apk/debug/`. Para instalar em um aparelho com depuração USB ou emulador configurado, execute `npx cordova run android`.
-
-A preparação web ou a geração dos arquivos da plataforma não provam que o APK foi compilado. Compilação e teste no aparelho exigem a cadeia Android acima. Assinatura de release, publicação em loja e suporte iOS ainda não estão configurados.
-
-O backend local usa loopback e não é acessível por outro aparelho. Para um APK com contas compartilhadas, use a URL HTTPS e a chave pública do projeto hospedado antes do build. Para gerar um APK portátil apenas com a demonstração:
-
-```sh
-. scripts/android-env.sh
-VITE_SUPABASE_URL='' VITE_SUPABASE_ANON_KEY='' npm run android:build
-```
-
-Esse APK abre as telas de login e permite navegar por **Explorar demonstração**, sem fingir uma autenticação real. Teste a instalação, o teclado e a navegação em um Android físico antes de distribuir.
-
-`android:build` rejeita a configuração local antes de empacotar e aceita somente um projeto HTTPS `*.supabase.co` com chave pública ou a demonstração sem conexão. Domínios personalizados exigem ajustar explicitamente essa validação, a CSP e a allowlist do Cordova.
-
-### Tela vazia e compatibilidade
-
-A versão 0.1.1 inclui um bundle compatível com WebViews antigos, polyfills locais e inicialização que aguarda o `deviceready` do Cordova. O hook de preparação garante a presença de `cordova_plugins.js` mesmo sem plugins instalados. A CSP continua restrita e autoriza somente os hashes dos pequenos scripts de inicialização gerados pelo plugin oficial do Vite.
-
-Se um arquivo não carregar, a tela inicial mostra recuperação e detalhes para suporte. Ainda é recomendado manter Chrome e Android System WebView atualizados. O APK tem `versionCode` 101 e pode atualizar a versão 0.1.0 com a mesma assinatura de desenvolvimento.
-
-### Verificação no emulador Android
-
-O teste abaixo utiliza um **emulador já inicializado**, com o APK de demonstração instalado e depuração WebView habilitada pelo build debug. Ele recusa números de série de telefones pessoais, testa a interface no WebView real e remove somente a publicação temporária criada pelo próprio teste.
-
-```sh
-. scripts/android-env.sh
-# Pacotes opcionais para criar um emulador de teste:
-sdkmanager 'emulator' 'system-images;android-30;default;x86_64'
-avdmanager create avd --name agitta-api30 --package 'system-images;android-30;default;x86_64'
-# Inicialize esse AVD e aguarde sys.boot_completed=1.
-adb -s emulator-5554 install -r platforms/android/app/build/outputs/apk/debug/app-debug.apk
-npm run test:android
-```
-
-Use `ANDROID_SERIAL=emulator-5556` para selecionar outro emulador. O ADB requer acesso de escrita ao seu diretório padrão de configuração; a instalação e o teste devem ser feitos na mesma sessão com as ferramentas Android ativadas. Sem aceleração de hardware, o primeiro boot pode demorar vários minutos.
+Antes de abrir para usuários, valide com duas contas em um projeto hospedado: confirmação de e-mail, login, publicação compartilhada, persistência dos favoritos, isolamento entre usuários e RLS. Os testes locais não verificam entrega de e-mail nem a configuração do provedor de hospedagem.

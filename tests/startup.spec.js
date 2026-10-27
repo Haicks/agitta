@@ -5,7 +5,7 @@ test('falha ao carregar o aplicativo mostra recuperação em vez de tela vazia',
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Não foi possível abrir o Agitta.' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Tentar novamente', exact: true })).toBeVisible();
-  await expect(page.locator('#startup-message')).toContainText('Android System WebView');
+  await expect(page.locator('#startup-message')).toContainText('atualize seu navegador');
 });
 
 test('WebView sem Object.hasOwn ou Object.fromEntries abre o feed e publica', async ({ page }) => {

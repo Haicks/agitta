@@ -5,6 +5,7 @@ async function enterDemo(page) {
   await page.getByRole('button', { name: /Explorar demonstração/ }).click();
   await expect(page.getByRole('heading', { name: 'O que agitta Brasília?' })).toBeVisible();
   await expect(page.locator('.event-card')).toHaveCount(5);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 }
 
 async function expectNoHorizontalOverflow(page) {

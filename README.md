@@ -1,52 +1,74 @@
 # Agitta
 
-O próximo rolê de Brasília começa aqui. MVP mobile em **Cordova, HTML, CSS e JavaScript**, com Supabase para contas e dados compartilhados. A versão **0.1.1** corrige a compatibilidade com WebViews antigos e a inicialização nativa.
+O próximo rolê de Brasília começa aqui. **Webapp instalável (PWA)** em HTML, CSS e JavaScript, com layout para celular e computador e Supabase para contas e eventos compartilhados. Versão **0.2.0**.
 
-[Baixar APK 0.1.1 de demonstração para Android](https://github.com/Haicks/agitta/raw/refs/heads/main/downloads/agitta-demo-0.1.1.apk) · [Instruções de download](downloads/README.md)
+O app abre no navegador e pode ser adicionado à tela inicial, sem baixar APK. A versão atual substitui a integração Cordova; os APKs antigos ficam apenas como histórico em `downloads/`.
 
-## O que esta versão inclui
+![Agitta no navegador em tela de computador](docs/screenshots/webapp-desktop.png)
 
-- Cadastro por e-mail e senha, login, confirmação de e-mail e logout.
-- Feed de eventos, busca e filtros por categoria.
-- Detalhes com data, endereço, classificação etária e localização no mapa.
-- Publicação de eventos por usuários autenticados.
-- Eventos salvos e perfil.
-- Protótipo navegável separado, com eventos **fictícios** e dados locais, acessível por **Explorar demonstração**. A demonstração não cria contas nem publica no Supabase.
+## O que dá para fazer
 
-As contas usam Supabase Auth. Para desenvolver sem contratar serviços, o projeto inclui um backend local com os serviços oficiais de autenticação e API. Para disponibilizar o app a outras pessoas, conecte um projeto Supabase hospedado. A demonstração funciona sem backend.
+- Criar conta, entrar com e-mail e senha, confirmar e-mail e sair.
+- Descobrir eventos, buscar e filtrar por categoria.
+- Consultar horário de Brasília, endereço, classificação etária e mapa.
+- Publicar eventos, guardar favoritos e acessar o perfil.
+- Explorar uma demonstração navegável com eventos fictícios, sem cadastro.
+- Instalar pela opção **Instalar Agitta** ou pelo menu do navegador.
+- Reabrir a demonstração sem internet depois do primeiro acesso ao build publicado.
 
-## Começar
+Login e eventos compartilhados exigem internet e um Supabase configurado. O cache offline guarda somente os arquivos públicos do app; não guarda respostas da API nem tokens. Os dados da demonstração ficam no armazenamento local do navegador. Atualizações pedem um toque em **Atualizar**, sem recarregar formulários automaticamente.
 
-Use Node.js 24 LTS e npm. Na raiz do repositório:
+## Rodar
+
+Node.js 24 LTS e npm:
 
 ```sh
 npm ci
+npm run dev
+```
+
+Abra o endereço informado pelo Vite. **Explorar demonstração** funciona sem backend. Para contas reais de desenvolvimento, com Docker/Compose:
+
+```sh
 npm run backend:start
 npm run backend:configure
 npm run dev
 ```
 
-O backend local exige Docker com Compose. As contas de desenvolvimento ficam apenas nesta máquina; nele, o e-mail é confirmado automaticamente e nenhuma mensagem é enviada. Abra no navegador o endereço informado pelo Vite. Para hospedagem e Android, siga [Configuração do Supabase e Android](docs/SETUP.md).
+## Build e publicação
+
+```sh
+npm run build
+npm run preview
+```
+
+A pasta `dist/` contém o site completo. Para publicar, use `npm run build:public`, que rejeita um backend apontando para o computador. Hospede todos os arquivos em HTTPS. Sem variáveis Supabase, o site oferece a demonstração; com URL e chave pública de um projeto hospedado, habilita contas compartilhadas.
+
+O [workflow de publicação no GitHub Pages](.github/workflows/pages.yml) está pronto para execução manual. Habilite **Settings → Pages → GitHub Actions** e execute **Actions → Publicar webapp → Run workflow**. O endereço será exibido pelo GitHub após uma publicação bem-sucedida. Veja [o passo a passo](docs/SETUP.md).
+
+## Verificação
 
 ```sh
 npm test
 npm run test:e2e
+npm run test:web
 npm run test:live
 npm run test:live:browser
-npm run build
 ```
 
-O build gera `www/`, usado pelo Cordova. Testes de navegador precisam do Chromium indicado em [SETUP](docs/SETUP.md).
+`test:web` testa o build real servido em `/agitta/`, incluindo CSS, manifesto, cache offline e atualização. Os dois testes `live` exigem o backend local; o teste de interface também exige o Vite em execução. Os navegadores usam Playwright; instale Chromium com `npx playwright install chromium` se não houver um disponível.
 
 ## Estrutura
 
 ```text
-src/                         interface, regras e acesso aos dados
+src/                         interface, navegação e acesso aos dados
+public/                      manifesto, ícones e recuperação de inicialização
+scripts/web-app.mjs          geração do cache offline versionado
 supabase/migrations/         esquema SQL e políticas de acesso
-tests/                       testes automatizados
-docs/                        configuração e próximas etapas
-config.xml                   aplicativo Cordova
-www/                         saída gerada; não versionada
+web-tests/                   testes da PWA no build de produção
+tests/                       validação e navegação do aplicativo
+.github/workflows/pages.yml  publicação manual no GitHub Pages
+dist/                        site gerado; não versionado
 ```
 
-[Prévia mobile](docs/screenshots/prototipo-mobile.png) · [Validação executada](docs/VALIDATION.md) · [Próximas etapas](docs/ROADMAP.md). Distribuição em loja, assinatura de release, notificações, comentários e avaliações ficam para etapas posteriores.
+[Captura mobile](docs/screenshots/webapp-mobile.png) · [Captura desktop](docs/screenshots/webapp-desktop.png) · [Validação](docs/VALIDATION.md) · [Próximas etapas](docs/ROADMAP.md).

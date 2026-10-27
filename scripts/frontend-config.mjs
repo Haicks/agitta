@@ -1,5 +1,5 @@
 /** Browser configuration is public. Reject privileged keys before Vite bundles them. */
-export function validateFrontendConfig(env, { android = false } = {}) {
+export function validateFrontendConfig(env, { publicDeployment = false } = {}) {
   const url = env.VITE_SUPABASE_URL?.trim();
   const key = env.VITE_SUPABASE_ANON_KEY?.trim();
   if (!url && !key) return { demo: true };
@@ -8,9 +8,9 @@ export function validateFrontendConfig(env, { android = false } = {}) {
   try { endpoint = new URL(url); } catch { throw new Error('A URL do Supabase é inválida.'); }
   const hosted = endpoint.protocol === 'https:' && /^[a-z0-9-]+\.supabase\.co$/.test(endpoint.hostname) && !endpoint.port;
   const local = endpoint.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(endpoint.hostname) && endpoint.port === '54321';
-  if ((!hosted && (!local || android)) || endpoint.username || endpoint.password || endpoint.search || endpoint.hash || !['', '/'].includes(endpoint.pathname)) {
-    throw new Error(android
-      ? 'O APK precisa da URL HTTPS de um projeto Supabase hospedado. Para demonstração, deixe as duas variáveis VITE_SUPABASE vazias.'
+  if ((!hosted && (!local || publicDeployment)) || endpoint.username || endpoint.password || endpoint.search || endpoint.hash || !['', '/'].includes(endpoint.pathname)) {
+    throw new Error(publicDeployment
+      ? 'O webapp público precisa da URL HTTPS de um projeto Supabase hospedado. Para demonstração, deixe as duas variáveis VITE_SUPABASE vazias.'
       : 'Use a URL HTTPS do projeto *.supabase.co ou o backend local na porta 54321, sem credenciais ou caminhos adicionais.');
   }
   let publicKey = /^sb_publishable_[A-Za-z0-9_-]+$/.test(key);

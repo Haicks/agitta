@@ -75,17 +75,14 @@ test('salvos e links diretos encontram eventos fora da primeira página do feed'
   await expect(page.getByRole('dialog').getByRole('heading', { name: 'Bora ocupar a pista? 🛹' })).toBeVisible();
 });
 
-test('botão voltar do Android retorna ao feed e permite sair na tela inicial', async ({ page }) => {
+test('voltar e avançar do navegador acompanham as telas do webapp', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /Explorar demonstração/ }).click();
   await page.locator('.mobile-nav').getByRole('link', { name: /Salvos/ }).click();
-  await page.evaluate(() => {
-    window.nativeExits = 0;
-    Object.defineProperty(navigator, 'app', { configurable: true, value: { exitApp: () => { window.nativeExits += 1; } } });
-    document.dispatchEvent(new Event('backbutton', { cancelable: true }));
-  });
+  await expect(page).toHaveURL(/#saved$/);
+  await page.goBack();
   await expect(page).toHaveURL(/#feed$/);
-  expect(await page.evaluate(() => window.nativeExits)).toBe(0);
-  await page.evaluate(() => document.dispatchEvent(new Event('backbutton', { cancelable: true })));
-  expect(await page.evaluate(() => window.nativeExits)).toBe(1);
+  await page.goForward();
+  await expect(page).toHaveURL(/#saved$/);
+  await expect(page.getByRole('heading', { name: 'Seus próximos rolês.' })).toBeVisible();
 });

@@ -15,11 +15,11 @@ test('frontend accepts demo and public keys but rejects privileged keys before b
   assert.throws(() => validateFrontendConfig(config({ VITE_SUPABASE_ANON_KEY: '' })), /ambas vazias/);
 });
 
-test('frontend URLs match allowed origins; phone builds reject computer loopback', () => {
+test('frontend URLs match allowed origins; public web builds reject computer loopback', () => {
   const local = config({ VITE_SUPABASE_URL: 'http://127.0.0.1:54321' });
   assert.equal(validateFrontendConfig(local).demo, false);
-  assert.throws(() => validateFrontendConfig(local, { android: true }), /APK/);
-  assert.equal(validateFrontendConfig(config(), { android: true }).demo, false);
+  assert.throws(() => validateFrontendConfig(local, { publicDeployment: true }), /webapp público/);
+  assert.equal(validateFrontendConfig(config(), { publicDeployment: true }).demo, false);
   for (const url of ['bad-url', 'https://evil.example', 'http://agitta.supabase.co', 'https://user:password@agitta.supabase.co', 'https://agitta.supabase.co/path', 'https://agitta.supabase.co?key=x', 'https://agitta.supabase.co:8443']) {
     assert.throws(() => validateFrontendConfig(config({ VITE_SUPABASE_URL: url })));
   }

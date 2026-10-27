@@ -4,16 +4,27 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#f8f7f3" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Agitta" />
     <meta name="description" content="Descubra, salve e compartilhe os próximos rolês de Brasília no Agitta." />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co http://127.0.0.1:54321 http://localhost:54321 ws://localhost:5173 ws://127.0.0.1:5173; object-src 'none'; base-uri 'self'; form-action 'self'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co http://127.0.0.1:54321 http://localhost:54321 ws://localhost:5173 ws://127.0.0.1:5173; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'" />
     <title>Agitta · O próximo rolê tá aqui</title>
     <link rel="stylesheet" href="/src/style.css" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="%BASE_URL%icons/apple-touch-icon.png" />
   </head>
   <body>
+    <aside id="webapp-toolbar" class="webapp-toolbar" aria-label="Aplicativo" hidden>
+      <p id="offline-status" role="status" hidden>Você está offline. A demo continua disponível; entrar e compartilhar eventos precisam de conexão.</p>
+      <button id="pwa-install" class="webapp-button" type="button" hidden>Instalar Agitta ↗</button>
+      <button id="pwa-update" class="webapp-button" type="button" hidden>Nova versão disponível · Atualizar</button>
+    </aside>
     <div id="app"><main class="startup-screen" id="startup-screen"><div class="startup-card"><span class="startup-brand">✳ agitta</span><h1 id="startup-title">Abrindo o seu próximo rolê…</h1><p id="startup-message" role="status">Só um instante.</p><button class="button button-primary" id="startup-reload" type="button" hidden>Tentar novamente</button><details id="startup-details" hidden><summary>Detalhes para suporte</summary><pre id="startup-error"></pre></details></div></main></div>
     <noscript>Ative o JavaScript para abrir o Agitta.</noscript>
     <div id="toast" role="status" aria-live="polite"></div>
+    <dialog id="install-guide" class="modal" aria-labelledby="install-title"><div class="modal-header"><h2 id="install-title">O Agitta na sua tela inicial</h2><button id="install-close" class="icon-button" type="button" aria-label="Fechar instruções">×</button></div><div class="modal-body"><p id="install-instructions"></p><p class="muted">A opção depende do navegador. Você também pode continuar usando o Agitta por aqui.</p></div></dialog>
     <script src="/startup.js"></script>
     <script type="module" src="/src/main.js"></script>
   </body>

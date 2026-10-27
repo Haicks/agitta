@@ -1,5 +1,6 @@
 import { backendConfigured, liveBackend, demoBackend } from './data.js';
 import { CATEGORIES, escapeHTML as esc, filterEvents, formatDate, formatPrice } from './domain.js';
+import { setupWebApp } from './web-app.js';
 
 const icons = {
   bolt: '<path d="m13 2-9 12h7l-1 8 10-13h-7l1-7Z"/>',
@@ -226,6 +227,7 @@ async function enterDemo(preserveRoute = false) {
   storeMode('demo');
   if (!preserveRoute) location.hash = 'feed';
   await loadEvents();
+  if (!preserveRoute) window.scrollTo(0, 0);
 }
 
 function watchAuth() {
@@ -340,6 +342,7 @@ root.addEventListener('submit', async (event) => {
       watchAuth();
       location.hash = 'feed';
       await loadEvents();
+      window.scrollTo(0, 0);
       toast('Chegou! Bora descobrir Brasília.');
     } else {
       const generation = sessionGeneration;
@@ -358,12 +361,6 @@ root.addEventListener('submit', async (event) => {
 });
 
 window.addEventListener('hashchange', render);
-function onNativeBack(event) {
-  event.preventDefault();
-  if (state.user && route() !== 'feed') location.hash = 'feed';
-  else if (!state.user && route() === 'signup') location.hash = 'login';
-  else navigator.app?.exitApp?.();
-}
 
 async function init() {
   render();
@@ -384,10 +381,5 @@ async function init() {
   } catch (error) { if (generation === sessionGeneration) { toast(error.message); render(); } }
 }
 
-function startApp() {
-  document.addEventListener('backbutton', onNativeBack, false);
-  init().catch((error) => window.agittaShowStartupError?.(error.message));
-}
-
-if (window.agittaNativeReady) window.agittaNativeReady.then(startApp, (error) => window.agittaShowStartupError?.(error.message));
-else startApp();
+setupWebApp();
+init().catch((error) => window.agittaShowStartupError?.(error.message));

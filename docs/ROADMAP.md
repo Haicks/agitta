@@ -7,10 +7,10 @@ Login e cadastro com Supabase, descoberta de eventos, publicação, detalhes, sa
 ## Antes de abrir para usuários
 
 - Validar contas, confirmação de e-mail e políticas RLS em um projeto Supabase real.
-- Testar em Android físico, incluindo teclado, navegação, conexão lenta e retorno do aplicativo ao primeiro plano.
+- Testar a PWA em Android e iPhone físicos, incluindo instalação, teclado, navegação, conexão lenta e retorno ao primeiro plano.
 - Definir recuperação de senha, termos de uso, privacidade, exclusão de conta e tratamento dos dados.
 - Implementar denúncia e moderação de eventos, com uma política adequada ao público a partir de 15 anos.
-- Configurar identidade visual final, ícones, assinatura do APK e distribuição de teste.
+- Publicar o webapp em HTTPS e validar o domínio, a atualização e os ícones instalados.
 
 ## Evolução do produto
 

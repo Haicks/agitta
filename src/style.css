@@ -437,6 +437,13 @@ h1, h2, h3, p { margin-top: 0; }
   .form-field.wide { grid-column: auto; }
   .auth-story h1 { font-size: 36px; }
 }
+.webapp-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 18px; padding: 9px 20px; background: #eaf3d8; color: #263611; border-bottom: 1px solid #d8e4c4; }
+.webapp-toolbar p { flex: 1 1 240px; margin: 0; font-size: 12px; line-height: 1.5; }
+.webapp-button { border: 1px solid #b6c49b; border-radius: 8px; padding: 8px 12px; background: transparent; color: inherit; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; min-height: 40px; }
+.webapp-button:hover { background: #d6f55c; }
+.webapp-button:focus-visible { outline: 2px solid #263611; outline-offset: 3px; }
+#install-guide p { line-height: 1.7; }
+@media (display-mode: standalone) { #pwa-install { display: none; } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
