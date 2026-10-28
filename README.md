@@ -15,19 +15,27 @@ O app abre no navegador e pode ser adicionado à tela inicial, sem baixar APK. A
 - Explorar uma demonstração navegável com eventos fictícios, sem cadastro.
 - Instalar pela opção **Instalar Agitta** ou pelo menu do navegador.
 - Reabrir a demonstração sem internet depois do primeiro acesso ao build publicado.
+- Acompanhar o tema claro/escuro do aparelho, com fundo preto quando não houver preferência clara disponível.
 
 Login e eventos compartilhados exigem internet e um Supabase configurado. O cache offline guarda somente os arquivos públicos do app; não guarda respostas da API nem tokens. Os dados da demonstração ficam no armazenamento local do navegador. Atualizações pedem um toque em **Atualizar**, sem recarregar formulários automaticamente.
 
 ## Rodar
 
-Node.js 24 LTS e npm:
+No seu computador, instale Node.js 24 LTS (inclui npm) e Git. Se ainda não tiver o projeto:
+
+```sh
+git clone https://github.com/Haicks/agitta.git
+cd agitta
+```
+
+Na pasta do projeto:
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Abra o endereço informado pelo Vite. **Explorar demonstração** funciona sem backend. Para contas reais de desenvolvimento, com Docker/Compose:
+Deixe o terminal aberto e acesse no navegador o endereço informado pelo Vite (porta padrão 5173). **Explorar demonstração** funciona sem backend. Veja o [passo a passo para rodar no seu computador](docs/RODAR_NO_COMPUTADOR.md), incluindo Windows e dúvidas comuns. Para contas reais de desenvolvimento, com Docker/Compose:
 
 ```sh
 npm run backend:start

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { readFile, writeFile } from 'node:fs/promises';
 
 async function openApp(page) {
   await page.goto('./');
@@ -40,6 +41,7 @@ test('build publicado em subdiretório tem CSS, navegação e manifesto instalá
 });
 
 test('offline recarrega o app com aparência, favoritos e publicações da demonstração', async ({ page, context }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
   await demo(page);
   await page.locator('.event-card').first().getByRole('button', { name: /^Salvar evento/ }).click();
   await expect(page.locator('.event-card').first().getByRole('button', { name: /^Remover dos salvos/ })).toBeVisible();
@@ -47,7 +49,7 @@ test('offline recarrega o app com aparência, favoritos e publicações da demon
   await page.reload();
   await expect(page.locator('.event-card')).toHaveCount(5);
   await expect(page.locator('#offline-status')).toBeVisible();
-  expect(await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)).toBe('rgb(248, 247, 243)');
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)).toBe('rgb(11, 13, 11)');
   await page.locator('.mobile-nav').getByRole('link', { name: 'Salvos', exact: true }).click();
   await expect(page.locator('.event-card')).toHaveCount(1);
   await page.locator('.mobile-nav').getByRole('link', { name: 'Publicar', exact: true }).click();
@@ -107,11 +109,25 @@ test('atualização aguarda escolha e preserva formulário até o usuário atual
   await demo(page);
   await page.locator('.mobile-nav').getByRole('link', { name: 'Publicar', exact: true }).click();
   await page.getByLabel('Qual é o rolê?').fill('Rascunho que deve continuar aqui');
-  await page.evaluate(() => navigator.serviceWorker.register('./sw.js?revision=2', { scope: './' }));
-  await expect(page.getByRole('button', { name: 'Nova versão disponível · Atualizar' })).toBeVisible();
-  await expect(page.getByLabel('Qual é o rolê?')).toHaveValue('Rascunho que deve continuar aqui');
-  await page.getByRole('dialog').getByRole('button', { name: 'Fechar', exact: true }).click();
-  await page.getByRole('button', { name: 'Nova versão disponível · Atualizar' }).click();
-  await expect(page.getByRole('heading', { name: 'O que agitta Brasília?' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Nova versão disponível · Atualizar' })).toBeHidden();
+  // A real deployment changes bytes at the same script URL. Changing the URL
+  // instead triggers another install when the app registers its canonical URL.
+  const workerFile = new URL('../.tools/web-test-dist/sw.js', import.meta.url);
+  const original = await readFile(workerFile, 'utf8');
+  const updated = original.replace(/const CACHE = PREFIX \+ '([^']+)';/, "const CACHE = PREFIX + '$1-updated';");
+  expect(updated).not.toBe(original);
+  try {
+    await writeFile(workerFile, updated);
+    await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
+    await expect(page.getByRole('button', { name: 'Nova versão disponível · Atualizar' })).toBeVisible();
+    await expect(page.getByLabel('Qual é o rolê?')).toHaveValue('Rascunho que deve continuar aqui');
+    await page.getByRole('dialog').getByRole('button', { name: 'Fechar', exact: true }).click();
+    await Promise.all([
+      page.waitForEvent('load'),
+      page.getByRole('button', { name: 'Nova versão disponível · Atualizar' }).click(),
+    ]);
+    await expect(page.getByRole('heading', { name: 'O que agitta Brasília?' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Nova versão disponível · Atualizar' })).toBeHidden();
+  } finally {
+    await writeFile(workerFile, original);
+  }
 });

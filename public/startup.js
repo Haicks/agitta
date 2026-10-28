@@ -1,6 +1,16 @@
 /* Show recovery even if an older browser cannot parse the application. */
 (function () {
   if (typeof window.globalThis === 'undefined') window.globalThis = window;
+  // Keep browser chrome in sync without reloading the page or touching forms.
+  if (typeof window.matchMedia === 'function') {
+    var lightTheme = window.matchMedia('(prefers-color-scheme: light)');
+    function syncThemeColor() {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', lightTheme.matches ? '#f8f7f3' : '#0b0d0b');
+    }
+    syncThemeColor();
+    if (lightTheme.addEventListener) lightTheme.addEventListener('change', syncThemeColor);
+    else if (lightTheme.addListener) lightTheme.addListener(syncThemeColor);
+  }
   function failed(detail) {
     if (!document.getElementById('startup-screen')) return;
     document.getElementById('startup-title').textContent = 'Não foi possível abrir o Agitta.';

@@ -1,6 +1,8 @@
 **Assim está o Agitta — prévia visual da versão 0.2.0**
 
-Capturas reais do site renderizado no navegador em 27/10/2026. Os eventos exibidos pertencem à demonstração e são fictícios.
+Capturas reais do site renderizado no navegador em 28/10/2026, com o tema escuro do aparelho ativado. Os eventos exibidos pertencem à demonstração e são fictícios.
+
+O tema acompanha o sistema e usa preto como padrão quando não há preferência clara disponível. A troca acontece sem recarregar a página.
 
 No computador, o feed tem navegação lateral, destaque principal, busca, categorias e sugestões por região.
 
@@ -17,3 +19,7 @@ A entrada reúne login, criação de conta e acesso à demonstração.
 Para divulgar um rolê, o formulário reúne descrição, data, local, região, endereço, preço e classificação.
 
 ![Formulário de publicação no celular](screenshots/webapp-publicacao-mobile.png)
+
+Quando o aparelho está no tema claro, a mesma interface acompanha essa preferência:
+
+![Feed no tema claro do aparelho](screenshots/webapp-claro-mobile.png)

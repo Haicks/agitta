@@ -3,7 +3,8 @@ import { existsSync } from 'node:fs';
 
 export default defineConfig({
   testDir: './web-tests',
-  fullyParallel: true,
+  // The update test replaces the shared preview worker, then restores it.
+  fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   workers: 2,
   reporter: 'list',

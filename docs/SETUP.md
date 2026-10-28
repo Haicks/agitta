@@ -2,6 +2,8 @@
 
 ## Desenvolvimento
 
+Para instalar e executar pela primeira vez no seu próprio computador, siga [Rodar o Agitta no seu computador](RODAR_NO_COMPUTADOR.md).
+
 Use Node.js 24 LTS e npm. No ambiente de nuvem, use o checkout existente em `/workspace/agitta`, sem criar outro worktree.
 
 ```sh
