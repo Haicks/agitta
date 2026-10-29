@@ -4,6 +4,8 @@ O próximo rolê de Brasília começa aqui. **Webapp instalável (PWA)** em HTML
 
 O app abre no navegador e pode ser adicionado à tela inicial, sem baixar APK. A versão atual substitui a integração Cordova; os APKs antigos ficam apenas como histórico em `downloads/`.
 
+Para retomar o trabalho em outra conversa, leia o [relatório geral e documento de continuidade](docs/CONTINUIDADE.md), com o estado atual, decisões, pendências e propostas de produto e monetização.
+
 ![Agitta no navegador em tela de computador](docs/screenshots/webapp-desktop.png)
 
 ## O que dá para fazer
